@@ -750,20 +750,20 @@ with tab2:
                     st.markdown(
                         f"""
 <div class="result-card">
-    <div class="r-label">차량번호</div>
-    <div style="margin-bottom:0.9rem;">
-        <span class="r-plate">{owner_plate}</span>
-    </div>
-    <div class="r-label">차주 정보</div>
-    <div style="margin-bottom:0.2rem;">
-        <span class="r-name">{owner_name}</span>
-        <span class="r-dept">{owner_dept}</span>
-        {shared_badge}
-    </div>
-    <div class="action-btns">
-        <a href="{tel_link}" class="btn-call">전화 걸기</a>
-        <a href="{sms_link}" class="btn-sms">이동 요청 문자</a>
-    </div>
+<div class="r-label">차량번호</div>
+<div style="margin-bottom:0.9rem;">
+<span class="r-plate">{owner_plate}</span>
+</div>
+<div class="r-label">차주 정보</div>
+<div style="margin-bottom:0.2rem;">
+<span class="r-name">{owner_name}</span>
+<span class="r-dept">{owner_dept}</span>
+{shared_badge}
+</div>
+<div class="action-btns">
+<a href="{tel_link}" class="btn-call">전화 걸기</a>
+<a href="{sms_link}" class="btn-sms">이동 요청 문자</a>
+</div>
 </div>
                         """,
                         unsafe_allow_html=True,
