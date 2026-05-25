@@ -468,13 +468,21 @@ def save_data(df: pd.DataFrame):
 # ─────────────────────────────────────────────
 # 유효성 검사 및 유틸리티 함수
 # ─────────────────────────────────────────────
-def is_duplicate(df: pd.DataFrame, phone: str, plate: str) -> bool:
+def is_phone_duplicate(df: pd.DataFrame, phone: str) -> bool:
+    """전화번호 중복 확인 (동일 번호는 재등록 불가)"""
     phone_clean = re.sub(r"\D", "", phone)
-    plate_clean = re.sub(r"\s", "", plate).upper()
     for _, row in df.iterrows():
         existing_phone = re.sub(r"\D", "", str(row.get("전화번호", "")))
+        if existing_phone == phone_clean:
+            return True
+    return False
+
+def is_plate_duplicate(df: pd.DataFrame, plate: str) -> bool:
+    """차량번호 중복 확인 (공동 담당자 등록 여부 판단용)"""
+    plate_clean = re.sub(r"\s", "", plate).upper()
+    for _, row in df.iterrows():
         existing_plate = re.sub(r"\s", "", str(row.get("차량번호", ""))).upper()
-        if existing_phone == phone_clean or existing_plate == plate_clean:
+        if existing_plate == plate_clean:
             return True
     return False
 
@@ -505,6 +513,42 @@ def make_sms_link(phone: str, body: str) -> str:
 
 
 # ─────────────────────────────────────────────
+# 세션 상태 초기화
+# ─────────────────────────────────────────────
+if "pending_registration" not in st.session_state:
+    st.session_state.pending_registration = None
+if "confirm_duplicate_plate" not in st.session_state:
+    st.session_state.confirm_duplicate_plate = False
+if "show_duplicate_dialog" not in st.session_state:
+    st.session_state.show_duplicate_dialog = False
+
+
+# ─────────────────────────────────────────────
+# 팝업 다이얼로그: 차량번호 중복 경고
+# ─────────────────────────────────────────────
+@st.dialog("⚠️ 이미 등록된 차량번호")
+def show_duplicate_plate_dialog():
+    pending = st.session_state.pending_registration
+    plate = pending["plate"] if pending else ""
+    st.markdown(f"**{plate}** 차량번호는 이미 등록되어 있습니다.")
+    st.markdown(
+        "공동 소유 차량이거나 추가 담당자를 등록하시려면 "
+        "**'추가 등록'**을 눌러 계속하세요."
+    )
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("추가 등록 ✅", type="primary", use_container_width=True):
+            st.session_state.confirm_duplicate_plate = True
+            st.session_state.show_duplicate_dialog = False
+            st.rerun()
+    with col2:
+        if st.button("취소", use_container_width=True):
+            st.session_state.pending_registration = None
+            st.session_state.show_duplicate_dialog = False
+            st.rerun()
+
+
+# ─────────────────────────────────────────────
 # 앱 시작
 # ─────────────────────────────────────────────
 
@@ -526,6 +570,29 @@ tab1, tab2 = st.tabs(["  차량 등록  ", "  차량 검색 및 알림  "])
 # 탭 1 : 차량 등록
 # ══════════════════════════════════════════════
 with tab1:
+    # ── 팝업에서 '추가 등록' 확인 후 실제 등록 처리
+    if st.session_state.confirm_duplicate_plate and st.session_state.pending_registration:
+        pending = st.session_state.pending_registration
+        df_current = load_data()
+        new_row = {
+            "이름": pending["name"],
+            "전화번호": pending["phone"],
+            "차량번호": pending["plate"],
+            "소속부서": pending["dept"],
+            "등록일시": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        }
+        df_new = pd.concat([df_current, pd.DataFrame([new_row])], ignore_index=True)
+        save_data(df_new)
+        name_registered = pending["name"]
+        st.session_state.pending_registration = None
+        st.session_state.confirm_duplicate_plate = False
+        st.success(f"'{name_registered}' 님이 공동 담당자로 추가 등록되었습니다.")
+        st.rerun()
+
+    # ── 차량번호 중복 팝업 표시
+    if st.session_state.show_duplicate_dialog:
+        show_duplicate_plate_dialog()
+
     df_all = load_data()
     car_count = len(df_all) if not df_all.empty else 0
 
@@ -564,12 +631,23 @@ with tab1:
                 st.error(e)
         else:
             df_current = load_data()
-            if is_duplicate(df_current, phone, plate):
-                st.warning("이미 등록된 전화번호 또는 차량번호입니다.")
+
+            if is_phone_duplicate(df_current, phone):
+                st.warning("이미 등록된 전화번호입니다.")
+            elif is_plate_duplicate(df_current, plate):
+                # 동일 차량번호 감지 → 팝업으로 추가 등록 여부 확인
+                st.session_state.pending_registration = {
+                    "name": name,
+                    "phone": re.sub(r"\D", "", phone),
+                    "plate": plate,
+                    "dept": dept,
+                }
+                st.session_state.show_duplicate_dialog = True
+                st.rerun()
             else:
                 new_row = {
                     "이름": name,
-                    "전화번호": re.sub(r"\D", "", phone), # 숫자만 깔끔하게 저장
+                    "전화번호": re.sub(r"\D", "", phone),
                     "차량번호": plate,
                     "소속부서": dept,
                     "등록일시": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -580,7 +658,7 @@ with tab1:
                 )
                 save_data(df_new)
                 st.success(f"'{name}' 님의 차량이 성공적으로 등록되었습니다.")
-                st.rerun() # 새로고침하여 카운트 갱신
+                st.rerun()
 
 
 # ══════════════════════════════════════════════
@@ -616,41 +694,61 @@ with tab2:
                 unsafe_allow_html=True,
             )
         else:
+            # 동일 차량번호 그룹화 (공동 담당자 처리)
+            plate_groups: dict = {}
+            for _, row in results.iterrows():
+                p_key = re.sub(r"\s", "", str(row.get("차량번호", ""))).upper()
+                plate_groups.setdefault(p_key, []).append(row)
+
+            total = len(results)
             st.markdown(
                 f"<p class='guide-text' style='margin-bottom:0.8rem;'>"
-                f"검색 결과 <span class='count-badge'>{len(results)}건</span></p>",
+                f"검색 결과 <span class='count-badge'>{total}건</span></p>",
                 unsafe_allow_html=True,
             )
 
-            for _, row in results.iterrows():
-                owner_name  = str(row.get("이름", ""))
-                owner_dept  = str(row.get("소속부서", ""))
-                owner_plate = str(row.get("차량번호", ""))
-                owner_phone = str(row.get("전화번호", ""))
+            for _, owners in plate_groups.items():
+                owner_count = len(owners)
+                for i, row in enumerate(owners):
+                    owner_name  = str(row.get("이름", ""))
+                    owner_dept  = str(row.get("소속부서", ""))
+                    owner_plate = str(row.get("차량번호", ""))
+                    owner_phone = str(row.get("전화번호", ""))
 
-                tel_link = make_tel_link(owner_phone)
-                sms_link = make_sms_link(owner_phone, SMS_BODY)
+                    tel_link = make_tel_link(owner_phone)
+                    sms_link = make_sms_link(owner_phone, SMS_BODY)
 
-                st.markdown(
-                    f"""
-                    <div class="result-card">
-                        <div class="r-label">차량번호</div>
-                        <div style="margin-bottom:0.9rem;">
-                            <span class="r-plate">{owner_plate}</span>
+                    # 공동 담당자 배지
+                    if owner_count > 1:
+                        shared_badge = (
+                            f'<span class="r-dept" style="background:#e0f2fe;'
+                            f'color:#0369a1;border-color:#bae6fd;">'
+                            f'공동담당자 {i+1}/{owner_count}</span>'
+                        )
+                    else:
+                        shared_badge = ""
+
+                    st.markdown(
+                        f"""
+                        <div class="result-card">
+                            <div class="r-label">차량번호</div>
+                            <div style="margin-bottom:0.9rem;">
+                                <span class="r-plate">{owner_plate}</span>
+                            </div>
+                            <div class="r-label">차주 정보</div>
+                            <div style="margin-bottom:0.2rem;">
+                                <span class="r-name">{owner_name}</span>
+                                <span class="r-dept">{owner_dept}</span>
+                                {shared_badge}
+                            </div>
+                            <div class="action-btns">
+                                <a href="{tel_link}" class="btn-call">전화 걸기</a>
+                                <a href="{sms_link}" class="btn-sms">이동 요청 문자</a>
+                            </div>
                         </div>
-                        <div class="r-label">차주 정보</div>
-                        <div style="margin-bottom:0.2rem;">
-                            <span class="r-name">{owner_name}</span>
-                            <span class="r-dept">{owner_dept}</span>
-                        </div>
-                        <div class="action-btns">
-                            <a href="{tel_link}" class="btn-call">전화 걸기</a>
-                            <a href="{sms_link}" class="btn-sms">이동 요청 문자</a>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                        """,
+                        unsafe_allow_html=True,
+                    )
     else:
         st.markdown(
             """
