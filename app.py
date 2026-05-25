@@ -1,7 +1,7 @@
 """
 성만교회 주차장 차량 관리 시스템
 Church Vehicle Management System
-(Google Sheets 연동 버전)
+(Google Sheets)
 """
 
 import streamlit as st
@@ -15,7 +15,9 @@ from streamlit_gsheets import GSheetsConnection
 # 설정값
 # ─────────────────────────────────────────────
 COLUMNS = ["이름", "전화번호", "차량번호", "소속부서", "등록일시"]
-DEPARTMENTS = ["여성1교구", "남성1교구", "여성2교구", "남성2교구", "여성3교구", "남성3,4교구", "여성4교구", "청년부"]
+DEPARTMENTS = ["여성1교구", "여성2교구", "여성3교구", "여성4교구", "여성5교구",
+                "남성1교구", "남성2교구", "남성3교구", "남성4교구", "남성5교구",
+                "청년부"]
 
 # ─────────────────────────────────────────────
 # 페이지 기본 설정
@@ -33,180 +35,141 @@ st.set_page_config(
 st.markdown("""
 <style>
 /* ── Google Font ── */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
 
-/* ── 전체 기본 설정 ── */
 html, body, [class*="css"] {
-    font-family: 'Noto Sans KR', sans-serif;
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
 }
 
 /* ── 배경 : 밝은 회색 ── */
 .stApp {
-    background-color: #f4f4f5;
+    background-color: #f9fafb;
 }
 
 /* ── 메인 컨테이너 ── */
 .main .block-container {
-    padding: 0 0 4rem 0;
+    padding: 0 0 4rem 0 !important;
     max-width: 500px;
     margin: 0 auto;
-    background-color: #f4f4f5;
 }
 
-/* ── 헤더 ── */
+/* ── Header ── */
 .header-wrap {
-    background-color: #C8192C;
-    padding: 2rem 1.5rem 1.8rem;
-    text-align: center;
-    margin-bottom: 1.6rem;
+    background-color: #ffffff;
+    border-bottom: 1px solid #f3f4f6;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0;
 }
-
-.header-wrap .church-name {
-    color: #ffffff;
-    font-size: 0.78rem;
+.header-wrap img {
+    height: 2.5rem;
+    width: auto;
+}
+.header-wrap .divider {
+    height: 1.5rem;
+    width: 1px;
+    background-color: #e5e7eb;
+}
+.header-wrap span {
+    font-size: 0.875rem;
     font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    margin: 0 0 0.5rem 0;
-    opacity: 0.85;
+    color: #4b5563;
 }
 
-.header-wrap h1 {
-    color: #ffffff;
-    font-size: 1.45rem;
-    font-weight: 700;
-    margin: 0 0 0.3rem 0;
-    line-height: 1.35;
-    letter-spacing: -0.01em;
-}
-
-.header-wrap .sub {
-    color: rgba(255,255,255,0.7);
-    font-size: 0.76rem;
-    margin: 0;
-    letter-spacing: 0.02em;
-}
-
-.header-divider {
-    width: 32px;
-    height: 2px;
-    background: rgba(255,255,255,0.5);
-    margin: 0.8rem auto 0.9rem;
-    border-radius: 2px;
-}
-
-/* ── 탭 ── */
+/* ── Tab Navigation (알약 형태) ── */
 .stTabs [data-baseweb="tab-list"] {
-    background: #ffffff;
-    border-bottom: 2px solid #e5e7eb;
-    padding: 0 1.2rem;
-    gap: 0;
-    margin-bottom: 1.4rem;
+    background: #f3f4f6 !important;
+    border-radius: 0.75rem !important;
+    padding: 0.25rem !important;
+    margin: 1rem 1rem 1.5rem 1rem !important;
+    border: none !important;
+    display: flex !important;
+    gap: 0 !important;
 }
-
 .stTabs [data-baseweb="tab"] {
-    background: transparent !important;
-    border-radius: 0 !important;
-    color: #9ca3af !important;
+    color: #6b7280 !important;
     font-weight: 500 !important;
-    font-size: 0.88rem !important;
-    padding: 0.85rem 1.2rem !important;
-    border-bottom: 2px solid transparent !important;
-    margin-bottom: -2px !important;
+    font-size: 0.875rem !important;
+    padding: 0.625rem 0 !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
     transition: all 0.2s ease;
+    flex: 1 !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
 }
-
 .stTabs [aria-selected="true"] {
+    background-color: #ffffff !important;
     color: #C8192C !important;
-    border-bottom: 2px solid #C8192C !important;
-    font-weight: 700 !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
 }
-
-/* ── 탭 패딩 영역 ── */
 .stTabs [data-baseweb="tab-panel"] {
-    padding: 0 1.2rem;
+    padding: 0 1rem;
 }
 
-/* ── 섹션 카드 ── */
-.section-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 1.4rem 1.3rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 2px 12px rgba(0,0,0,0.04);
-    border: 1px solid #f0f0f0;
-}
-
-/* ── 폼 레이블 ── */
+/* ── 폼 & 텍스트 ── */
 .stTextInput label,
 .stSelectbox label {
     color: #374151 !important;
-    font-weight: 600 !important;
-    font-size: 0.82rem !important;
-    letter-spacing: 0.01em !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    margin-bottom: 0.5rem !important;
 }
 
 /* ── 입력창 ── */
-.stTextInput > div > div > input {
-    background: #ffffff !important;
-    border: 1.5px solid #d1d5db !important;
-    border-radius: 8px !important;
+.stTextInput > div > div > input,
+.stSelectbox > div > div {
+    background-color: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0.75rem !important; /* xl */
     color: #111827 !important;
-    font-family: 'Noto Sans KR', sans-serif !important;
-    font-size: 0.9rem !important;
-    padding: 0.6rem 0.85rem !important;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    font-size: 1rem !important;
+    padding: 0.875rem 1rem !important; /* py-3.5 px-4 */
+    transition: all 0.2s ease;
 }
-
 .stTextInput > div > div > input::placeholder {
     color: #9ca3af !important;
 }
-
-.stTextInput > div > div > input:focus {
+.stTextInput > div > div > input:focus,
+.stSelectbox > div > div:focus-within {
+    background-color: #ffffff !important;
     border-color: #C8192C !important;
-    box-shadow: 0 0 0 3px rgba(200,25,44,0.1) !important;
+    box-shadow: 0 0 0 2px rgba(200, 25, 44, 0.2) !important;
     outline: none !important;
 }
 
-/* ── 셀렉트박스 ── */
-.stSelectbox > div > div {
-    background: #ffffff !important;
-    border: 1.5px solid #d1d5db !important;
-    border-radius: 8px !important;
-    color: #111827 !important;
-    font-family: 'Noto Sans KR', sans-serif !important;
-}
-
-.stSelectbox > div > div:focus-within {
-    border-color: #C8192C !important;
-    box-shadow: 0 0 0 3px rgba(200,25,44,0.1) !important;
+/* ── 폼 컨테이너 (차량 등록 탭) ── */
+[data-testid="stForm"] {
+    background: #ffffff;
+    border-radius: 1rem; /* 2xl */
+    padding: 1.25rem; /* p-5 */
+    border: 1px solid #f3f4f6;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* ── 등록 버튼 ── */
-.stButton > button {
+.stButton > button, [data-testid="stFormSubmitButton"] > button {
     background-color: #C8192C !important;
-    background-image: none !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
-    padding: 0.72rem 1.5rem !important;
+    border-radius: 1rem !important; /* 2xl */
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    padding: 1rem !important; /* py-4 */
     width: 100% !important;
-    transition: background-color 0.18s ease, box-shadow 0.18s ease !important;
-    box-shadow: 0 2px 8px rgba(200,25,44,0.3) !important;
-    font-family: 'Noto Sans KR', sans-serif !important;
-    letter-spacing: 0.02em !important;
+    transition: all 0.2s ease !important;
 }
-
-.stButton > button:hover {
-    background-color: #a81424 !important;
-    box-shadow: 0 4px 16px rgba(200,25,44,0.38) !important;
+.stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover {
+    background-color: #A81526 !important;
 }
-
-.stButton > button:active {
-    background-color: #8f0f1d !important;
-    box-shadow: none !important;
+.stButton > button:active, [data-testid="stFormSubmitButton"] > button:active {
+    transform: scale(0.98) !important;
 }
 
 /* ── 성공/경고/에러 메시지 ── */
@@ -214,7 +177,7 @@ html, body, [class*="css"] {
     background: #fef2f2 !important;
     border: 1px solid #fca5a5 !important;
     border-left: 4px solid #C8192C !important;
-    border-radius: 8px !important;
+    border-radius: 0.75rem !important;
     color: #7f1d1d !important;
 }
 
@@ -222,213 +185,195 @@ html, body, [class*="css"] {
     background: #fffbeb !important;
     border: 1px solid #fcd34d !important;
     border-left: 4px solid #f59e0b !important;
-    border-radius: 8px !important;
+    border-radius: 0.75rem !important;
 }
 
 .stError {
     background: #fef2f2 !important;
     border: 1px solid #fca5a5 !important;
     border-left: 4px solid #ef4444 !important;
-    border-radius: 8px !important;
+    border-radius: 0.75rem !important;
 }
 
 /* ── 검색 결과 카드 ── */
 .result-card {
     background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-top: 3px solid #C8192C;
-    border-radius: 10px;
-    padding: 1.4rem 1.3rem 1.2rem;
-    margin-bottom: 0.85rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    animation: fadeInUp 0.3s ease;
+    border: 1px solid #f3f4f6;
+    border-radius: 1rem; /* 2xl */
+    padding: 1.25rem; /* p-5 */
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.result-card .r-label {
-    color: #6b7280;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 0.25rem;
-}
-
-.result-card .r-plate {
-    display: inline-block;
-    background: #C8192C;
-    color: #ffffff;
-    font-size: 1.3rem;
-    font-weight: 900;
-    padding: 0.35rem 1rem;
-    border-radius: 6px;
-    letter-spacing: 0.05em;
+.result-card .rc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     margin-bottom: 1rem;
 }
-
-.result-card .r-name {
-    color: #111827;
-    font-size: 1.05rem;
-    font-weight: 700;
-    display: inline;
+.result-card .rc-info-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
-
-.result-card .r-dept {
-    display: inline-block;
-    background: #f3f4f6;
-    color: #374151;
-    font-size: 0.75rem;
+.result-card .rc-icon-box {
+    width: 2.5rem; /* 10 */
+    height: 2.5rem; /* 10 */
+    background-color: rgba(200, 25, 44, 0.1);
+    border-radius: 0.75rem; /* xl */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #C8192C;
+}
+.result-card .rc-plate {
+    font-size: 1.125rem; /* lg */
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    line-height: 1.2;
+}
+.result-card .rc-name {
+    font-size: 0.875rem; /* sm */
+    color: #6b7280;
+    margin: 0;
+    margin-top: 0.25rem;
+}
+.result-card .rc-dept {
+    padding: 0.25rem 0.75rem; /* py-1 px-3 */
+    background-color: rgba(200, 25, 44, 0.1);
+    color: #C8192C;
+    font-size: 0.75rem; /* xs */
     font-weight: 500;
-    padding: 0.2rem 0.65rem;
-    border-radius: 20px;
+    border-radius: 9999px; /* full */
+}
+.result-card .rc-dept.shared-badge {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
     margin-left: 0.5rem;
-    border: 1px solid #e5e7eb;
 }
 
 /* ── 액션 버튼 ── */
 .action-btns {
     display: flex;
-    gap: 0.6rem;
-    margin-top: 1.1rem;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
 }
-
+.btn-call, .btn-sms {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0; /* py-3 */
+    border-radius: 0.75rem; /* xl */
+    font-weight: 500;
+    font-size: 1rem;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+}
 .btn-call {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    padding: 0.72rem 0.5rem;
-    background: #C8192C;
-    color: #ffffff !important;
-    font-weight: 700;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    text-decoration: none !important;
-    box-shadow: 0 2px 8px rgba(200,25,44,0.28);
-    transition: background-color 0.18s ease;
-    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f3f4f6; /* gray-100 */
+    color: #374151 !important; /* gray-700 */
 }
-
 .btn-call:hover {
-    background: #a81424;
+    background-color: #e5e7eb; /* gray-200 */
+}
+.btn-call:active {
+    transform: scale(0.98);
+}
+.btn-sms {
+    background-color: #C8192C;
     color: #ffffff !important;
-    text-decoration: none !important;
+}
+.btn-sms:hover {
+    background-color: #A81526;
+}
+.btn-sms:active {
+    transform: scale(0.98);
 }
 
-.btn-sms {
-    flex: 1;
+/* ── 검색 결과 없음 / Empty State ── */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0; /* py-16 */
+    text-align: center;
+}
+.empty-state .es-icon-wrap {
+    width: 5rem; /* 20 */
+    height: 5rem; /* 20 */
+    border-radius: 9999px; /* full */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    padding: 0.72rem 0.5rem;
-    background: #ffffff;
-    color: #C8192C !important;
-    font-weight: 700;
-    font-size: 0.85rem;
-    border-radius: 8px;
-    text-decoration: none !important;
-    border: 1.5px solid #C8192C;
-    transition: background-color 0.18s ease;
-    font-family: 'Noto Sans KR', sans-serif;
+    margin-bottom: 1rem;
 }
-
-.btn-sms:hover {
-    background: #fef2f2;
-    color: #C8192C !important;
-    text-decoration: none !important;
+.es-icon-wrap.bg-red {
+    background-color: rgba(200, 25, 44, 0.1);
+    color: rgba(200, 25, 44, 0.4);
+}
+.es-icon-wrap.bg-gray {
+    background-color: #f3f4f6;
+    color: #d1d5db;
+}
+.empty-state .es-title {
+    color: #6b7280; /* gray-500 */
+    font-weight: 500;
+    font-size: 1rem;
+    margin: 0;
+}
+.empty-state .es-desc {
+    color: #9ca3af; /* gray-400 */
+    font-size: 0.875rem; /* sm */
+    margin: 0;
+    margin-top: 0.25rem;
 }
 
 /* ── 카운트 배지 ── */
-.count-badge {
-    display: inline-block;
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #C8192C;
-    font-size: 0.72rem;
-    padding: 0.15rem 0.6rem;
-    border-radius: 20px;
-    margin-left: 0.4rem;
-    font-weight: 700;
-}
-
-/* ── 검색 결과 없음 ── */
-.no-result {
-    text-align: center;
-    color: #9ca3af;
-    padding: 2.5rem 1rem;
-    font-size: 0.88rem;
-    line-height: 1.7;
-}
-
-.no-result .icon {
-    font-size: 2rem;
-    display: block;
-    margin-bottom: 0.5rem;
-    opacity: 0.4;
-}
-
-/* ── 구분선 ── */
-.divider {
-    border: none;
-    border-top: 1px solid #e5e7eb;
-    margin: 1rem 0;
-}
-
-/* ── 푸터 ── */
-.footer {
-    text-align: center;
-    color: #9ca3af;
-    font-size: 0.7rem;
-    padding: 1.5rem 1rem 0.5rem;
-    border-top: 1px solid #e5e7eb;
-    margin-top: 1.5rem;
-}
-
-/* ── 안내 텍스트 ── */
-.guide-text {
-    color: #6b7280;
-    font-size: 0.8rem;
+.count-text {
+    font-size: 0.875rem; /* sm */
+    color: #6b7280; /* gray-500 */
     margin-bottom: 1rem;
-    line-height: 1.6;
+}
+.count-text span {
+    font-weight: 600;
+    color: #C8192C;
+}
+
+/* ── 기타 UI ── */
+.form-title {
+    font-size: 1.125rem; /* lg */
+    font-weight: 600;
+    color: #111827; /* gray-900 */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.form-title svg {
+    color: #C8192C;
+    width: 1.25rem;
+    height: 1.25rem;
 }
 
 /* ── 검색창 레이블 숨기기 ── */
 .search-input label {
     display: none;
 }
-
-/* ── 모바일 반응형 ── */
-@media (max-width: 480px) {
-    .header-wrap h1 {
-        font-size: 1.2rem;
-    }
-    .result-card .r-plate {
-        font-size: 1.1rem;
-    }
-    .stTabs [data-baseweb="tab-panel"] {
-        padding: 0 0.8rem;
-    }
-}
 </style>
 """, unsafe_allow_html=True)
-
 
 # ─────────────────────────────────────────────
 # 구글 시트 연동 함수
 # ─────────────────────────────────────────────
 def load_data() -> pd.DataFrame:
     try:
-        # ttl=0으로 설정하여 매번 최신 데이터를 불러옵니다.
         conn = st.connection("gsheets", type=GSheetsConnection)
         df = conn.read(worksheet="시트1", ttl=0)
         
-        # 데이터프레임 정리 (빈 문자열 처리 등)
         if df.empty and len(df.columns) == 0:
             return pd.DataFrame(columns=COLUMNS)
             
@@ -440,102 +385,116 @@ def load_data() -> pd.DataFrame:
         df = df.astype(str)
         df = df.fillna("")
         df = df.replace("nan", "")
-        # 전화번호 0 복구 (구글 시트가 0을 지웠을 경우 대비)
         def fix_phone(p):
             p = str(p).strip()
             if p.endswith(".0"):
                 p = p[:-2]
             p = re.sub(r"\D", "", p)
-            if len(p) in (9, 10) and not p.startswith("0"):
+            if p.startswith("10"):
                 p = "0" + p
             return p
-        
+            
         df["전화번호"] = df["전화번호"].apply(fix_phone)
-        
-        # 빈 데이터 행 제거
-        df = df[df["전화번호"].str.strip() != ""]
         return df
     except Exception as e:
-        # 연결 실패나 파일이 비어있는 경우 빈 데이터프레임 반환
+        st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
         return pd.DataFrame(columns=COLUMNS)
 
 def save_data(df: pd.DataFrame):
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    conn.update(worksheet="시트1", data=df)
-    st.cache_data.clear() # 저장 후 캐시 비우기
-
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        conn.update(worksheet="시트1", data=df)
+        st.cache_data.clear()
+    except Exception as e:
+        st.error(f"데이터를 저장하는 중 오류가 발생했습니다: {e}")
 
 # ─────────────────────────────────────────────
-# 유효성 검사 및 유틸리티 함수
+# 유틸리티 함수
 # ─────────────────────────────────────────────
+def format_phone(p: str) -> str:
+    p = re.sub(r"\D", "", str(p))
+    if len(p) == 11:
+        return f"{p[:3]}-{p[3:7]}-{p[7:]}"
+    elif len(p) == 10:
+        if p.startswith("02"):
+            return f"{p[:2]}-{p[2:6]}-{p[6:]}"
+        else:
+            return f"{p[:3]}-{p[3:6]}-{p[6:]}"
+    return p
+
+def validate_phone(p: str) -> bool:
+    digits = re.sub(r"\D", "", p)
+    return len(digits) in [10, 11]
+
+def validate_plate(p: str) -> bool:
+    p = str(p).strip()
+    digits = re.sub(r"\D", "", p)
+    return len(digits) >= 4
+
 def is_phone_duplicate(df: pd.DataFrame, phone: str) -> bool:
-    """전화번호 중복 확인 (동일 번호는 재등록 불가)"""
-    phone_clean = re.sub(r"\D", "", phone)
-    for _, row in df.iterrows():
-        existing_phone = re.sub(r"\D", "", str(row.get("전화번호", "")))
-        if existing_phone == phone_clean:
-            return True
-    return False
+    if df.empty:
+        return False
+    digits = re.sub(r"\D", "", phone)
+    return any(re.sub(r"\D", "", str(x)) == digits for x in df["전화번호"])
 
 def is_plate_duplicate(df: pd.DataFrame, plate: str) -> bool:
-    """차량번호 중복 확인 (공동 담당자 등록 여부 판단용)"""
-    plate_clean = re.sub(r"\s", "", plate).upper()
-    for _, row in df.iterrows():
-        existing_plate = re.sub(r"\s", "", str(row.get("차량번호", ""))).upper()
-        if existing_plate == plate_clean:
-            return True
-    return False
-
-def validate_phone(phone: str) -> bool:
-    cleaned = re.sub(r"\D", "", phone)
-    return len(cleaned) in (10, 11)
-
-def validate_plate(plate: str) -> bool:
-    cleaned = re.sub(r"\s", "", plate)
-    return len(cleaned) >= 5
+    if df.empty:
+        return False
+    p_clean = re.sub(r"\s", "", str(plate))
+    return any(re.sub(r"\s", "", str(x)) == p_clean for x in df["차량번호"])
 
 def search_by_plate(df: pd.DataFrame, query: str) -> pd.DataFrame:
-    q = re.sub(r"\s", "", query).upper()
-    mask = df["차량번호"].apply(
-        lambda x: q in re.sub(r"\s", "", str(x)).upper()
-    )
-    return df[mask].reset_index(drop=True)
+    if df.empty:
+        return pd.DataFrame(columns=COLUMNS)
+    q_clean = re.sub(r"\s", "", str(query))
+    if not q_clean:
+        return pd.DataFrame(columns=COLUMNS)
+    
+    def match_plate(x):
+        x_clean = re.sub(r"\s", "", str(x))
+        if len(q_clean) == 4 and q_clean.isdigit():
+            return x_clean.endswith(q_clean)
+        return q_clean in x_clean
+        
+    mask = df["차량번호"].apply(match_plate)
+    return df[mask]
 
 def make_tel_link(phone: str) -> str:
-    cleaned = re.sub(r"\D", "", phone)
-    return f"tel:{cleaned}"
+    digits = re.sub(r"\D", "", str(phone))
+    return f"tel:{digits}"
 
 def make_sms_link(phone: str, body: str) -> str:
-    from urllib.parse import quote
-    cleaned = re.sub(r"\D", "", phone)
-    encoded_body = quote(body, safe="")
-    return f"sms:{cleaned}?body={encoded_body}"
-
+    import urllib.parse
+    digits = re.sub(r"\D", "", str(phone))
+    encoded_body = urllib.parse.quote(body)
+    return f"sms:{digits}?body={encoded_body}"
 
 # ─────────────────────────────────────────────
 # 세션 상태 초기화
 # ─────────────────────────────────────────────
-if "pending_registration" not in st.session_state:
-    st.session_state.pending_registration = None
-if "confirm_duplicate_plate" not in st.session_state:
-    st.session_state.confirm_duplicate_plate = False
 if "show_duplicate_dialog" not in st.session_state:
     st.session_state.show_duplicate_dialog = False
+if "confirm_duplicate_plate" not in st.session_state:
+    st.session_state.confirm_duplicate_plate = False
+if "pending_registration" not in st.session_state:
+    st.session_state.pending_registration = None
 if "show_success_dialog" not in st.session_state:
     st.session_state.show_success_dialog = False
 if "success_message" not in st.session_state:
     st.session_state.success_message = ""
 
 # ─────────────────────────────────────────────
-# 팝업 다이얼로그: 차량번호 중복 경고
+# 팝업 다이얼로그: 중복 차량 처리
 # ─────────────────────────────────────────────
-@st.dialog("⚠️ 이미 등록된 차량번호")
+@st.dialog("⚠️ 차량번호 중복 알림")
 def show_duplicate_plate_dialog():
     pending = st.session_state.pending_registration
-    plate = pending["plate"] if pending else ""
-    st.markdown(f"**{plate}** 차량번호는 이미 등록되어 있습니다.")
+    if not pending:
+        return
+        
+    st.warning(f"이미 등록된 차량번호({pending['plate']})입니다.")
     st.markdown(
-        "공동 소유 차량이거나 추가 담당자를 등록하시려면 "
+        "가족 등 **공동 담당자**로 추가하시겠습니까?<br>"
         "**'추가 등록'**을 눌러 계속하세요."
     )
     col1, col2 = st.columns(2)
@@ -568,21 +527,124 @@ def show_success_dialog():
 # ── 헤더
 st.markdown("""
 <div class="header-wrap">
-    <p class="church-name">Seongman Church</p>
-    <h1>성만교회<br>차량 관리 시스템</h1>
-    <div class="header-divider"></div>
-    <p class="sub">Vehicle Management</p>
+    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-dp6YSXmd5R3GoHrI9qJJkSCyV48QaO.png" alt="성만교회 로고">
+    <div class="divider"></div>
+    <span>차량 관리 시스템</span>
 </div>
 """, unsafe_allow_html=True)
 
 # ── 탭
-tab1, tab2 = st.tabs(["  차량 등록  ", "  차량 검색 및 알림  "])
+tab1, tab2 = st.tabs(["🔍 차량 검색 및 알림", "➕ 차량 등록"])
 
 
 # ══════════════════════════════════════════════
-# 탭 1 : 차량 등록
+# 탭 1 : 차량 검색 및 알림 (순서 변경됨)
 # ══════════════════════════════════════════════
 with tab1:
+    SMS_BODY = "성만교회 주차장입니다. 차량 이동 부탁드립니다."
+
+    query = st.text_input(
+        "차량번호 검색",
+        placeholder="차량번호 뒤 4자리를 입력하세요",
+        label_visibility="collapsed",
+    )
+
+    if query.strip():
+        df_data = load_data()
+        results = search_by_plate(df_data, query.strip())
+
+        if results.empty:
+            st.markdown(
+                f"""
+<div class="empty-state">
+<div class="es-icon-wrap bg-gray">
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+</div>
+<p class="es-title">검색 결과가 없습니다</p>
+<p class="es-desc">다른 번호로 검색해 보세요</p>
+</div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            # 동일 차량번호 그룹화 (공동 담당자 처리)
+            plate_groups: dict = {}
+            for _, row in results.iterrows():
+                p_key = re.sub(r"\s", "", str(row.get("차량번호", ""))).upper()
+                plate_groups.setdefault(p_key, []).append(row)
+
+            total = len(results)
+            st.markdown(
+                f"<div class='count-text'>검색 결과 <span>{total}</span>건</div>",
+                unsafe_allow_html=True,
+            )
+
+            for _, owners in plate_groups.items():
+                owner_count = len(owners)
+                for i, row in enumerate(owners):
+                    owner_name  = str(row.get("이름", ""))
+                    owner_dept  = str(row.get("소속부서", ""))
+                    owner_plate = str(row.get("차량번호", ""))
+                    owner_phone = str(row.get("전화번호", ""))
+
+                    tel_link = make_tel_link(owner_phone)
+                    sms_link = make_sms_link(owner_phone, f"[성만교회 차량 이동 요청] 안녕하세요. 차량번호 {owner_plate} 이동 부탁드립니다.")
+
+                    shared_badge_html = ""
+                    if owner_count > 1:
+                        shared_badge_html = f'<span class="rc-dept shared-badge">공동담당자 {i+1}/{owner_count}</span>'
+
+                    st.markdown(
+                        f"""
+<div class="result-card">
+<div class="rc-header">
+<div class="rc-info-wrap">
+<div class="rc-icon-box">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+</div>
+<div>
+<p class="rc-plate">{owner_plate}</p>
+<p class="rc-name">{owner_name}</p>
+</div>
+</div>
+<div>
+<span class="rc-dept">{owner_dept}</span>
+{shared_badge_html}
+</div>
+</div>
+<div class="action-btns">
+<a href="{tel_link}" class="btn-call">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+전화 걸기
+</a>
+<a href="{sms_link}" class="btn-sms">
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+이동 요청 문자
+</a>
+</div>
+</div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+    else:
+        st.markdown(
+            """
+<div class="empty-state">
+<div class="es-icon-wrap bg-red">
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+</div>
+<p class="es-title">차량을 검색해 주세요</p>
+<p class="es-desc">차량번호 뒤 4자리로 검색할 수 있습니다</p>
+</div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+# ══════════════════════════════════════════════
+# 탭 2 : 차량 등록 (순서 변경됨)
+# ══════════════════════════════════════════════
+with tab2:
     # ── 팝업에서 '추가 등록' 확인 후 실제 등록 처리
     if st.session_state.confirm_duplicate_plate and st.session_state.pending_registration:
         pending = st.session_state.pending_registration
@@ -611,20 +673,20 @@ with tab1:
     if st.session_state.show_success_dialog:
         show_success_dialog()
 
-    df_all = load_data()
-    car_count = len(df_all) if not df_all.empty else 0
-
     st.markdown(
-        f"<p class='guide-text'>차량 정보를 정확히 입력 후 등록해 주세요."
-        f" 현재 등록된 차량 <span class='count-badge'>{car_count}대</span></p>",
-        unsafe_allow_html=True,
+        """
+<div class="form-title">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+차량 정보 등록
+</div>
+        """, unsafe_allow_html=True
     )
 
     with st.form("register_form", clear_on_submit=True):
-        name  = st.text_input("이름", placeholder="홍길동")
-        phone = st.text_input("전화번호", placeholder="01012345678 (숫자만 입력하셔도 됩니다)")
-        plate = st.text_input("차량번호 전체", placeholder="123가4567  또는  12가3456")
-        dept  = st.selectbox("소속 부서", options=DEPARTMENTS)
+        name  = st.text_input("이름", placeholder="이름을 입력하세요")
+        phone = st.text_input("전화번호", placeholder="010-0000-0000")
+        plate = st.text_input("차량번호 전체", placeholder="12가 3456")
+        dept  = st.selectbox("소속 교구/부서", options=DEPARTMENTS)
         submitted = st.form_submit_button("등록하기")
 
     if submitted:
@@ -679,107 +741,3 @@ with tab1:
                 st.session_state.show_success_dialog = True
                 st.rerun()
 
-
-# ══════════════════════════════════════════════
-# 탭 2 : 차량 검색 및 알림
-# ══════════════════════════════════════════════
-with tab2:
-    SMS_BODY = "성만교회 주차장입니다. 차량 이동 부탁드립니다."
-
-    st.markdown(
-        "<p class='guide-text'>차량번호 뒤 4자리 숫자 또는 전체 번호를 입력하세요."
-        "<br>예) '4567' 입력 시 '123가4567' 차량이 검색됩니다.</p>",
-        unsafe_allow_html=True,
-    )
-
-    query = st.text_input(
-        "차량번호 검색",
-        placeholder="차량번호 뒤 4자리를 입력하세요",
-        label_visibility="collapsed",
-    )
-
-    if query.strip():
-        df_data = load_data()
-        results = search_by_plate(df_data, query.strip())
-
-        if results.empty:
-            st.markdown(
-                f"""
-<div class="no-result">
-    <strong style="color:#374151; display:block; margin-bottom:0.3rem;">검색 결과가 없습니다</strong>
-    '{query}' 에 해당하는 차량이 등록되어 있지 않습니다.
-</div>
-                """,
-                unsafe_allow_html=True,
-            )
-        else:
-            # 동일 차량번호 그룹화 (공동 담당자 처리)
-            plate_groups: dict = {}
-            for _, row in results.iterrows():
-                p_key = re.sub(r"\s", "", str(row.get("차량번호", ""))).upper()
-                plate_groups.setdefault(p_key, []).append(row)
-
-            total = len(results)
-            st.markdown(
-                f"<p class='guide-text' style='margin-bottom:0.8rem;'>"
-                f"검색 결과 <span class='count-badge'>{total}건</span></p>",
-                unsafe_allow_html=True,
-            )
-
-            for _, owners in plate_groups.items():
-                owner_count = len(owners)
-                for i, row in enumerate(owners):
-                    owner_name  = str(row.get("이름", ""))
-                    owner_dept  = str(row.get("소속부서", ""))
-                    owner_plate = str(row.get("차량번호", ""))
-                    owner_phone = str(row.get("전화번호", ""))
-
-                    tel_link = make_tel_link(owner_phone)
-                    sms_link = make_sms_link(owner_phone, SMS_BODY)
-
-                    # 공동 담당자 배지
-                    if owner_count > 1:
-                        shared_badge = (
-                            f'<span class="r-dept" style="background:#e0f2fe;'
-                            f'color:#0369a1;border-color:#bae6fd;">'
-                            f'공동담당자 {i+1}/{owner_count}</span>'
-                        )
-                    else:
-                        shared_badge = ""
-
-                    st.markdown(
-                        f"""
-<div class="result-card">
-<div class="r-label">차량번호</div>
-<div style="margin-bottom:0.9rem;">
-<span class="r-plate">{owner_plate}</span>
-</div>
-<div class="r-label">차주 정보</div>
-<div style="margin-bottom:0.2rem;">
-<span class="r-name">{owner_name}</span>
-<span class="r-dept">{owner_dept}</span>
-{shared_badge}
-</div>
-<div class="action-btns">
-<a href="{tel_link}" class="btn-call">전화 걸기</a>
-<a href="{sms_link}" class="btn-sms">이동 요청 문자</a>
-</div>
-</div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-    else:
-        st.markdown(
-            """
-<div class="no-result">
-    위 검색창에 차량번호를 입력하면<br>차주 정보와 연락 버튼이 나타납니다.
-</div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-# ── 푸터
-st.markdown(
-    "<div class='footer'>성만교회 &middot; 차량 관리 시스템 v1.0</div>",
-    unsafe_allow_html=True,
-)
