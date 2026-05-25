@@ -521,7 +521,10 @@ if "confirm_duplicate_plate" not in st.session_state:
     st.session_state.confirm_duplicate_plate = False
 if "show_duplicate_dialog" not in st.session_state:
     st.session_state.show_duplicate_dialog = False
-
+if "show_success_dialog" not in st.session_state:
+    st.session_state.show_success_dialog = False
+if "success_message" not in st.session_state:
+    st.session_state.success_message = ""
 
 # ─────────────────────────────────────────────
 # 팝업 다이얼로그: 차량번호 중복 경고
@@ -546,6 +549,16 @@ def show_duplicate_plate_dialog():
             st.session_state.pending_registration = None
             st.session_state.show_duplicate_dialog = False
             st.rerun()
+
+# ─────────────────────────────────────────────
+# 팝업 다이얼로그: 등록 완료
+# ─────────────────────────────────────────────
+@st.dialog("✅ 등록 완료")
+def show_success_dialog():
+    st.markdown(st.session_state.success_message)
+    if st.button("확인", type="primary", use_container_width=True):
+        st.session_state.show_success_dialog = False
+        st.rerun()
 
 
 # ─────────────────────────────────────────────
@@ -586,12 +599,17 @@ with tab1:
         name_registered = pending["name"]
         st.session_state.pending_registration = None
         st.session_state.confirm_duplicate_plate = False
-        st.success(f"'{name_registered}' 님이 공동 담당자로 추가 등록되었습니다.")
+        st.session_state.success_message = f"'{name_registered}' 님이 공동 담당자로 추가 등록되었습니다."
+        st.session_state.show_success_dialog = True
         st.rerun()
 
     # ── 차량번호 중복 팝업 표시
     if st.session_state.show_duplicate_dialog:
         show_duplicate_plate_dialog()
+
+    # ── 등록 완료 팝업 표시
+    if st.session_state.show_success_dialog:
+        show_success_dialog()
 
     df_all = load_data()
     car_count = len(df_all) if not df_all.empty else 0
@@ -657,7 +675,8 @@ with tab1:
                     ignore_index=True,
                 )
                 save_data(df_new)
-                st.success(f"'{name}' 님의 차량이 성공적으로 등록되었습니다.")
+                st.session_state.success_message = f"'{name}' 님의 차량이 성공적으로 등록되었습니다."
+                st.session_state.show_success_dialog = True
                 st.rerun()
 
 
@@ -686,10 +705,10 @@ with tab2:
         if results.empty:
             st.markdown(
                 f"""
-                <div class="no-result">
-                    <strong style="color:#374151; display:block; margin-bottom:0.3rem;">검색 결과가 없습니다</strong>
-                    '{query}' 에 해당하는 차량이 등록되어 있지 않습니다.
-                </div>
+<div class="no-result">
+    <strong style="color:#374151; display:block; margin-bottom:0.3rem;">검색 결과가 없습니다</strong>
+    '{query}' 에 해당하는 차량이 등록되어 있지 않습니다.
+</div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -730,37 +749,37 @@ with tab2:
 
                     st.markdown(
                         f"""
-                        <div class="result-card">
-                            <div class="r-label">차량번호</div>
-                            <div style="margin-bottom:0.9rem;">
-                                <span class="r-plate">{owner_plate}</span>
-                            </div>
-                            <div class="r-label">차주 정보</div>
-                            <div style="margin-bottom:0.2rem;">
-                                <span class="r-name">{owner_name}</span>
-                                <span class="r-dept">{owner_dept}</span>
-                                {shared_badge}
-                            </div>
-                            <div class="action-btns">
-                                <a href="{tel_link}" class="btn-call">전화 걸기</a>
-                                <a href="{sms_link}" class="btn-sms">이동 요청 문자</a>
-                            </div>
-                        </div>
+<div class="result-card">
+    <div class="r-label">차량번호</div>
+    <div style="margin-bottom:0.9rem;">
+        <span class="r-plate">{owner_plate}</span>
+    </div>
+    <div class="r-label">차주 정보</div>
+    <div style="margin-bottom:0.2rem;">
+        <span class="r-name">{owner_name}</span>
+        <span class="r-dept">{owner_dept}</span>
+        {shared_badge}
+    </div>
+    <div class="action-btns">
+        <a href="{tel_link}" class="btn-call">전화 걸기</a>
+        <a href="{sms_link}" class="btn-sms">이동 요청 문자</a>
+    </div>
+</div>
                         """,
                         unsafe_allow_html=True,
                     )
     else:
         st.markdown(
             """
-            <div class="no-result">
-                위 검색창에 차량번호를 입력하면<br>차주 정보와 연락 버튼이 나타납니다.
-            </div>
+<div class="no-result">
+    위 검색창에 차량번호를 입력하면<br>차주 정보와 연락 버튼이 나타납니다.
+</div>
             """,
             unsafe_allow_html=True,
         )
 
 # ── 푸터
 st.markdown(
-    "<div class='footer'>성만교회 청년부 &middot; 차량 관리 시스템 v1.0</div>",
+    "<div class='footer'>성만교회 &middot; 차량 관리 시스템 v1.0</div>",
     unsafe_allow_html=True,
 )
